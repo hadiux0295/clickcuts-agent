@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClickCuts Agent — Shorts Studio</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0e0f12; color:#e8e8ea; font-family: -apple-system, "Segoe UI", sans-serif; max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 4px; }
+  .sub { color:#8a8d94; font-size: 0.85rem; margin-bottom: 28px; }
+  .msg { padding: 12px 16px; border-radius: 10px; margin-bottom: 12px; white-space: pre-wrap; line-height: 1.5; }
+  .msg.user { background:#1c3a5e; margin-left: 15%; }
+  .msg.agent { background:#1a1b1f; border:1px solid #2a2c31; margin-right: 15%; }
+  .role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color:#8a8d94; margin-bottom: 6px; }
+  form { display:flex; gap:8px; margin-top: 24px; position: sticky; bottom: 20px; }
+  textarea { flex:1; background:#1a1b1f; border:1px solid #2a2c31; border-radius: 8px; color:#e8e8ea; padding: 10px 12px; font-size: 0.95rem; resize: vertical; min-height: 44px; }
+  button { background:#3b6ea5; color:#fff; border:none; border-radius: 8px; padding: 0 18px; font-size: 0.95rem; cursor:pointer; }
+  button:hover { background:#4a7cb5; }
+  button.ghost { background:transparent; border:1px solid #2a2c31; color:#8a8d94; }
+  .error { background:#4a1f1f; border:1px solid #7a3030; color:#f0b8b8; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
+  .empty { color:#8a8d94; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h1>ClickCuts Agent</h1>
+  <div class="sub">Shorts Studio Agent — recommends the next Life Interpreter episode's structure &amp; thinker, grounded in ClickHouse retention data.</div>
+
+  {% if not history %}
+    <div class="empty">Try: "Which structure should the next episode use?"</div>
+  {% endif %}
+
+  {% for m in history %}
+    <div class="msg {{ m.role }}">
+      <div class="role">{{ m.role }}</div>{{ m.text }}
+    </div>
+  {% endfor %}
+
+  {% if error %}
+    <div class="error">Error: {{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/">
+    <textarea name="message" placeholder="Ask about structure, thinker, or retention..." required></textarea>
+    <button type="submit">Send</button>
+  </form>
+  <form method="post" action="/reset">
+    <button type="submit" class="ghost">Reset conversation</button>
+  </form>
+</body>
+</html>
