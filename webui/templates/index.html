@@ -5,47 +5,156 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ClickCuts Agent — Shorts Studio</title>
 <style>
-  :root { color-scheme: dark; }
-  body { background:#0e0f12; color:#e8e8ea; font-family: -apple-system, "Segoe UI", sans-serif; max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
-  h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 4px; }
-  .sub { color:#8a8d94; font-size: 0.85rem; margin-bottom: 28px; }
+  :root { color-scheme: dark; --bg:#0e0f12; --panel:#1a1b1f; --line:#2a2c31; --muted:#8a8d94; --accent:#3b6ea5; --accent2:#7fb3ff; }
+  * { box-sizing: border-box; }
+  body { background:var(--bg); color:#e8e8ea; font-family: -apple-system, "Segoe UI", sans-serif; max-width: 780px; margin: 0 auto; padding: 32px 20px 120px; }
+  h1 { font-size: 1.3rem; font-weight: 600; margin: 0 0 4px; }
+  .sub { color:var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
+  .pipeline { color:var(--muted); font-size: 0.75rem; margin-bottom: 24px; font-family: ui-monospace, monospace; }
   .msg { padding: 12px 16px; border-radius: 10px; margin-bottom: 12px; white-space: pre-wrap; line-height: 1.5; }
   .msg.user { background:#1c3a5e; margin-left: 15%; }
-  .msg.agent { background:#1a1b1f; border:1px solid #2a2c31; margin-right: 15%; }
-  .role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color:#8a8d94; margin-bottom: 6px; }
-  form { display:flex; gap:8px; margin-top: 24px; position: sticky; bottom: 20px; }
-  textarea { flex:1; background:#1a1b1f; border:1px solid #2a2c31; border-radius: 8px; color:#e8e8ea; padding: 10px 12px; font-size: 0.95rem; resize: vertical; min-height: 44px; }
-  button { background:#3b6ea5; color:#fff; border:none; border-radius: 8px; padding: 0 18px; font-size: 0.95rem; cursor:pointer; }
-  button:hover { background:#4a7cb5; }
-  button.ghost { background:transparent; border:1px solid #2a2c31; color:#8a8d94; }
+  .msg.agent { background:var(--panel); border:1px solid var(--line); margin-right: 10%; }
+  .role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color:var(--muted); margin-bottom: 6px; display:flex; justify-content:space-between; }
+  .tools { margin-top: 10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .tool { font-family: ui-monospace, monospace; font-size: 0.7rem; color:#b9d4ff; background:#14243a; border:1px solid #234066; border-radius: 999px; padding: 2px 9px; }
+  .tool::before { content:"⚙ "; }
+  .chart { margin-top: 12px; background:#111216; border:1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .chart .cap { font-size: 0.72rem; color:var(--muted); margin-bottom: 4px; }
+  .chart svg { width:100%; height:auto; display:block; }
+  .thinking { color:var(--muted); font-style: italic; }
+  .thinking .dots::after { content:"…"; animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
   .error { background:#4a1f1f; border:1px solid #7a3030; color:#f0b8b8; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
-  .empty { color:#8a8d94; font-size: 0.9rem; }
+  .empty { color:var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
+  .suggest { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 20px; }
+  .suggest button { background:transparent; border:1px solid var(--line); color:#c9cbd0; border-radius: 999px; padding: 6px 12px; font-size: 0.82rem; cursor:pointer; }
+  .suggest button:hover { border-color:var(--accent2); color:#fff; }
+  form.composer { display:flex; gap:8px; margin-top: 16px; position: sticky; bottom: 16px; background:var(--bg); padding-top: 8px; }
+  textarea { flex:1; background:var(--panel); border:1px solid var(--line); border-radius: 8px; color:#e8e8ea; padding: 10px 12px; font-size: 0.95rem; resize: vertical; min-height: 44px; font-family: inherit; }
+  button.send { background:var(--accent); color:#fff; border:none; border-radius: 8px; padding: 0 18px; font-size: 0.95rem; cursor:pointer; }
+  button.send:hover { background:#4a7cb5; }
+  button.send:disabled { opacity: 0.5; cursor: default; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--muted); border-radius: 8px; padding: 0 12px; cursor:pointer; }
+  .note { color:var(--muted); font-size: 0.72rem; margin-top: 8px; }
+  b { color:#fff; }
 </style>
 </head>
 <body>
   <h1>ClickCuts Agent</h1>
-  <div class="sub">Shorts Studio Agent — recommends the next Life Interpreter episode's structure &amp; thinker, grounded in ClickHouse retention data.</div>
+  <div class="sub">Shorts Studio Agent — recommends the next Life Interpreter episode's narrative structure &amp; thinker, grounded in ClickHouse retention data.</div>
+  <div class="pipeline">Gemini 2.5 Flash (ADK, Vertex AI Agent Engine) → 4 fixed tools → mcp-clickhouse → ClickHouse Cloud</div>
 
-  {% if not history %}
-    <div class="empty">Try: "Which structure should the next episode use?"</div>
-  {% endif %}
+  <div id="log">
+    {% for m in history %}
+      <div class="msg {{ m.role }}" data-role="{{ m.role }}" data-text="{{ m.text }}"
+           data-tools="{{ (m.tools or [])|join(',') }}" data-retention='{{ (m.retention or {})|tojson }}'></div>
+    {% endfor %}
+  </div>
 
-  {% for m in history %}
-    <div class="msg {{ m.role }}">
-      <div class="role">{{ m.role }}</div>{{ m.text }}
-    </div>
-  {% endfor %}
+  <div id="empty" class="empty" {% if history %}style="display:none"{% endif %}>Ask about narrative structure, thinker persona, or a retention curve — or pick one:</div>
+  <div id="suggest" class="suggest" {% if history %}style="display:none"{% endif %}>
+    <button type="button" data-q="Which structure should the next episode use?">Which structure should the next episode use?</button>
+    <button type="button" data-q="Compare structure A vs C on retention. Does it differ per thinker?">A vs C — does it differ per thinker?</button>
+    <button type="button" data-q="Show me the retention curve for buddha_qa_8 and tell me where viewers drop off.">Show retention curve for buddha_qa_8</button>
+  </div>
 
-  {% if error %}
-    <div class="error">Error: {{ error }}</div>
-  {% endif %}
+  <div id="error" class="error" style="display:none"></div>
 
-  <form method="post" action="/">
-    <textarea name="message" placeholder="Ask about structure, thinker, or retention..." required></textarea>
-    <button type="submit">Send</button>
+  <form class="composer" id="composer">
+    <textarea id="input" name="message" placeholder="Ask about structure, thinker, or retention..." required></textarea>
+    <button type="submit" class="send" id="send">Send</button>
+    <button type="button" class="ghost" id="reset" title="Start a new conversation">Reset</button>
   </form>
-  <form method="post" action="/reset">
-    <button type="submit" class="ghost">Reset conversation</button>
-  </form>
+  <div class="note">Live agent — each answer runs real ClickHouse queries via Gemini tool calls. The first answer can take ~30 s while the agent and the analytics cluster warm up.</div>
+
+<script>
+(function () {
+  const log = document.getElementById('log');
+  const input = document.getElementById('input');
+  const send = document.getElementById('send');
+  const errBox = document.getElementById('error');
+  const empty = document.getElementById('empty');
+  const suggest = document.getElementById('suggest');
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmt(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+
+  function retentionSvg(r) {
+    const pts = (r.points || []).filter(p => Array.isArray(p) && p.length === 2);
+    if (!pts.length) return '';
+    const W = 600, H = 180, L = 36, B = 22, T = 8, R = 8;
+    const ymax = Math.max(1, ...pts.map(p => p[1]));
+    const x = t => L + t * (W - L - R);
+    const y = v => T + (1 - v / ymax) * (H - T - B);
+    const path = pts.map((p, i) => (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ');
+    const area = path + ` L${x(pts[pts.length-1][0]).toFixed(1)} ${y(0).toFixed(1)} L${x(pts[0][0]).toFixed(1)} ${y(0).toFixed(1)} Z`;
+    let grid = '';
+    for (const g of [0, 0.25, 0.5, 0.75, 1]) {
+      grid += `<line x1="${L}" x2="${W-R}" y1="${y(g*ymax).toFixed(1)}" y2="${y(g*ymax).toFixed(1)}" stroke="#2a2c31" stroke-width="1"/>`;
+      grid += `<text x="${L-6}" y="${(y(g*ymax)+4).toFixed(1)}" fill="#8a8d94" font-size="10" text-anchor="end">${Math.round(g*ymax*100)}%</text>`;
+    }
+    for (const g of [0, 0.25, 0.5, 0.75, 1]) {
+      grid += `<text x="${x(g).toFixed(1)}" y="${H-6}" fill="#8a8d94" font-size="10" text-anchor="middle">${Math.round(g*100)}%</text>`;
+    }
+    return `<div class="chart"><div class="cap">Retention curve — <b>${esc(r.video_key || '')}</b>${r.title ? ' · ' + esc(r.title) : ''} (x: % of video, y: audience still watching)</div>
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="retention curve">
+        ${grid}
+        <path d="${area}" fill="#3b6ea5" fill-opacity="0.18"/>
+        <path d="${path}" fill="none" stroke="#7fb3ff" stroke-width="2"/>
+      </svg></div>`;
+  }
+
+  function bubble(role, text, tools, retention, meta) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    let html = `<div class="role"><span>${role}</span>${meta ? `<span>${esc(meta)}</span>` : ''}</div>${fmt(text)}`;
+    if (tools && tools.length) html += `<div class="tools">${tools.map(t => `<span class="tool">${esc(t)}</span>`).join('')}</div>`;
+    if (retention && retention.points) html += retentionSvg(retention);
+    div.innerHTML = html;
+    log.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    return div;
+  }
+
+  // Hydrate server-rendered history (after a reload) into the same bubble format.
+  for (const el of Array.from(log.querySelectorAll('.msg[data-role]'))) {
+    const tools = el.dataset.tools ? el.dataset.tools.split(',') : [];
+    let ret = null; try { ret = JSON.parse(el.dataset.retention || 'null'); } catch (e) {}
+    const b = bubble(el.dataset.role, el.dataset.text, tools, ret && ret.points ? ret : null, '');
+    el.replaceWith(b);
+  }
+
+  async function ask(message) {
+    message = message.trim();
+    if (!message) return;
+    errBox.style.display = 'none';
+    empty.style.display = 'none'; suggest.style.display = 'none';
+    bubble('user', message);
+    input.value = ''; send.disabled = true;
+    const think = document.createElement('div');
+    think.className = 'msg agent thinking';
+    const t0 = Date.now();
+    think.innerHTML = '<div class="role"><span>agent</span></div>Querying ClickHouse via Gemini tool calls<span class="dots"></span> <span id="elapsed">0 s</span>';
+    log.appendChild(think); think.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const timer = setInterval(() => { const e = document.getElementById('elapsed'); if (e) e.textContent = Math.round((Date.now()-t0)/1000) + ' s'; }, 1000);
+    try {
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
+      const data = await res.json();
+      think.remove();
+      if (!res.ok || data.error) { errBox.textContent = 'Error: ' + (data.error || res.status); errBox.style.display = 'block'; }
+      else bubble('agent', data.text, data.tools, data.retention, (data.elapsed_s != null ? data.elapsed_s + ' s' : ''));
+    } catch (e) {
+      think.remove(); errBox.textContent = 'Network error: ' + e; errBox.style.display = 'block';
+    } finally { clearInterval(timer); send.disabled = false; input.focus(); }
+  }
+
+  document.getElementById('composer').addEventListener('submit', ev => { ev.preventDefault(); ask(input.value); });
+  input.addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); ask(input.value); } });
+  for (const b of suggest.querySelectorAll('button')) b.addEventListener('click', () => ask(b.dataset.q));
+  document.getElementById('reset').addEventListener('click', async () => {
+    await fetch('/reset', { method: 'POST' }); location.reload();
+  });
+})();
+</script>
 </body>
 </html>

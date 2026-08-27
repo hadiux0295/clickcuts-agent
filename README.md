@@ -35,7 +35,10 @@ Cloud Run (webui/)               Vertex AI Agent Engine        Cloud Run
 ```
 
 - **`webui/`** — minimal Flask UI on Cloud Run. Thin client only — calls the already-deployed
-  Agent Engine instance via `stream_query()` and renders the conversation.
+  Agent Engine instance via `stream_query()` and renders the conversation: async chat, the
+  tool calls the agent made shown as chips under each answer, and an inline SVG retention
+  chart whenever `get_retention_curve` is called. Conversation history is kept server-side
+  (the service runs as a single warm instance), not in the session cookie.
 - **`agent/`** — the ADK agent (`shorts_studio_agent.py`) and its 4 fixed, parameterized
   ClickHouse tools (`clickhouse_tools.py`): `get_structure_performance`,
   `get_thinker_performance`, `get_structure_by_thinker`, `get_retention_curve(video_key)`.
