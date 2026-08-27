@@ -9,7 +9,7 @@ guess, not a static rule, an actual tool-calling agent reading real analytics.
 
 **Live demo:** https://clickcuts-agent-802273971180.us-central1.run.app/
 
-**Trailer (3 min, real unstaged demo session):** https://youtube.com/watch?v=8Q08oxv50I0
+**Trailer (real unstaged demo session, ~40s):** https://youtube.com/watch?v=8Q08oxv50I0
 
 ## What it does
 
@@ -78,3 +78,7 @@ python test_local.py
 
 No credentials are hardcoded anywhere in this repo — everything above is read from
 environment variables at runtime.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

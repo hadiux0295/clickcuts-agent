@@ -15,7 +15,7 @@ from clickhouse_tools import (
 )
 
 # Model string verified against this GCP project during hackathon STEP 0 (2026-08-23) —
-# do not swap for a recalled/sample model id (CLAUDE.md §9).
+# do not swap for a recalled/sample model id without re-verifying it against the project.
 MODEL_ID = "gemini-2.5-flash"
 
 root_agent = Agent(

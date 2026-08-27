@@ -73,7 +73,7 @@ def build_structure_map():
 
     Read-only. Array index N (0-based) corresponds to key '<thinker>_qa_{N+1}' — confirmed
     against upload_meta.json keys, which are generated the same way by sync_upload_meta.mjs.
-    Items predating the 2026-07-26 structure-variant rollout (CLAUDE.md §9.13) have no
+    Items predating the 2026-07-26 structure-variant rollout have no
     'structure' field and are left out of the map (videos table default '' applies).
     """
     smap = {}

@@ -1,7 +1,7 @@
 -- clickcuts-db schema (Agentic Cinema hackathon, ClickHouse track)
 -- Normalized so retention curves support range queries, not one Array() blob.
 
--- structure = A/interpretation | B/? | C/counterpoint narrative-card variant (CLAUDE.md §9.13,
+-- structure = A/interpretation | B/context | C/counterpoint narrative-card variant (
 -- introduced 2026-07-26). '' = pre-variant video or non-QA content (e.g. longform sleep pilots,
 -- thinker='mixed') — the agent must exclude '' rows from structure comparisons, not treat as a 4th bucket.
 CREATE TABLE IF NOT EXISTS videos (
