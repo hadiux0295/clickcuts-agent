@@ -9,7 +9,7 @@ guess, not a static rule, an actual tool-calling agent reading real analytics.
 
 **Live demo:** https://clickcuts-agent-802273971180.us-central1.run.app/
 
-**Trailer (real unstaged demo session, 2:23, narrated):** https://youtube.com/watch?v=PFsqkLqoZSo
+**Trailer (real unstaged demo session, 2:23, narrated):** https://youtu.be/bvkGqCXL-yA
 
 ## What it does
 
